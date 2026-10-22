@@ -45,3 +45,8 @@ Ensure Python is installed, then activate your virtual environment:
 
 ### 3. Successful Server Response
 ![POST Response](post-response.png)
+
+---
+### SQLite Exploration (Stage 4)
+* **Query Ran**: `SELECT COUNT(*) FROM tasks;`
+* **Result**: Returned the total row count from the database, verifying that manual updates made in DB Browser reflect instantly through the live API without requiring a server restart.
