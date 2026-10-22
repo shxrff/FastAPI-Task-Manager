@@ -35,6 +35,14 @@ Ensure Python is installed, then activate your virtual environment:
 .\venv\Scripts\Activate.ps1
 ```
 
+## 2. 🚀 Quickstart
+1. Clone the repository and navigate to the project folder.
+2. Create and activate a virtual environment, then install dependencies (`fastapi`, `uvicorn`, `pydantic`).
+3. Start the server with:
+   ```bash
+   uvicorn main:app --reload
+
+
 ## API Screenshots (Swagger UI)
 
 ### 1. GET Request Output
@@ -47,6 +55,10 @@ Ensure Python is installed, then activate your virtual environment:
 ![POST Response](post-response.png)
 
 ---
-### SQLite Exploration (Stage 4)
-* **Query Ran**: `SELECT COUNT(*) FROM tasks;`
-* **Result**: Returned the total row count from the database, verifying that manual updates made in DB Browser reflect instantly through the live API without requiring a server restart.
+## 💡 Architecture & Design Choices
+- **Why SQLite?** Chosen because it's a single file, requires zero setup, and survives server restarts.
+- **Database Location:** The database file (`tasks.db`) is created automatically in the root directory and is git-ignored so every clone starts fresh.
+
+## 🔍 Database Exploration (Stage 4)
+- **Example Query:** `SELECT COUNT(*) FROM tasks;`
+- **Result:** Returned the total active row count, verifying live synchronization between manual database edits and the API.
