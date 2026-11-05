@@ -9,3 +9,6 @@ __pycache__/
 *.docx
 *.jpeg
 tasks.db
+.env
+*.db
+*.db-journal
