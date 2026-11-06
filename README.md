@@ -62,3 +62,14 @@ Ensure Python is installed, then activate your virtual environment:
 ## 🔍 Database Exploration (Stage 4)
 - **Example Query:** `SELECT COUNT(*) FROM tasks;`
 - **Result:** Returned the total active row count, verifying live synchronization between manual database edits and the API.
+
+---
+
+## Assignment 3: Containerized FastAPI & PostgreSQL Stack
+
+### 🚀 What This Is
+A fully containerized task manager API built with **FastAPI**, backed by **PostgreSQL** and orchestrated with **Docker Compose**.
+
+### ⚙️ Environment Setup
+```powershell
+cp .env.example .env
