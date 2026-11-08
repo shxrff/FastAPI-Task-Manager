@@ -1,7 +1,7 @@
 import os
 import psycopg
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, Header, HTTPException, status
 from pydantic import BaseModel
 from supabase import create_client, Client
 
@@ -23,6 +23,23 @@ app = FastAPI()
 class AuthRequest(BaseModel):
     email: str
     password: str
+
+@app.get("/public/info", status_code=200)
+def public_info():
+    return {"message": "Welcome stranger! This info is public."}
+
+@app.get("/protected/profile", status_code=200)
+def protected_profile(authorization: str = Header(None)):
+    # Check if the header is missing or doesn't start with "Bearer "
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "Access token required"}
+        )
+    
+    # Extract token (we aren't verifying it with Supabase yet—that's Stage 3!)
+    token = authorization.split(" ")[1]
+    return {"message": "Token received successfully!", "token_preview": token[:10] + "..."}
 
 @app.post("/auth/signup", status_code=status.HTTP_201_CREATED)
 def signup(body: AuthRequest):
