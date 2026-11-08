@@ -5,18 +5,46 @@ from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 from supabase import create_client, Client
 
-# Load environment variables from .env (Stage 1 requirement)
+# Load environment variables from .env
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
+print("DEBUG URL:", DATABASE_URL)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+# Safeguard check so it fails clearly if .env is missing or unread
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in your .env file")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
 
+class AuthRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/auth/signup", status_code=status.HTTP_201_CREATED)
+def signup(body: AuthRequest):
+    if not body.email or not body.password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+    try:
+        response = supabase.auth.sign_up({"email": body.email, "password": body.password})
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/auth/login")
+def login(body: AuthRequest):
+    if not body.email or not body.password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+    try:
+        response = supabase.auth.sign_in_with_password({"email": body.email, "password": body.password})
+        return response
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid login credentials")
+
 def get_connection():
-    # Helper to connect to PostgreSQL using the secret from .env
     return psycopg.connect(DATABASE_URL)
 
 # Database initialization function for Stage 1
