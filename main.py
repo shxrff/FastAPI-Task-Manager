@@ -1,9 +1,14 @@
 import os
 import psycopg
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException, status
+from fastapi import FastAPI,Depends, Header, HTTPException, status
 from pydantic import BaseModel
 from supabase import create_client, Client
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+# Initialize the security scheme for Swagger UI
+security = HTTPBearer()
+
 
 # Load environment variables from .env
 load_dotenv()
@@ -27,14 +32,8 @@ class AuthRequest(BaseModel):
 from fastapi import Depends, Header, HTTPException, status
 
 # 1. Reusable dependency guard
-def get_current_user(authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": "Access token required"}
-        )
-    
-    token = authorization.split(" ")[1]
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
     
     try:
         response = supabase.auth.get_user(token)
@@ -44,7 +43,7 @@ def get_current_user(authorization: str = Header(None)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"error": "Invalid or expired token"}
         )
-
+    
 # 2. Protected profile route using the guard
 @app.get("/protected/profile", status_code=200)
 def protected_profile(user = Depends(get_current_user)):
