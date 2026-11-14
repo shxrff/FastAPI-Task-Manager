@@ -24,12 +24,10 @@ class AuthRequest(BaseModel):
     email: str
     password: str
 
-@app.get("/public/info", status_code=200)
-def public_info():
-    return {"message": "Welcome stranger! This info is public."}
+from fastapi import Depends, Header, HTTPException, status
 
-@app.get("/protected/profile", status_code=200)
-def protected_profile(authorization: str = Header(None)):
+# 1. Reusable dependency guard
+def get_current_user(authorization: str = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -39,20 +37,42 @@ def protected_profile(authorization: str = Header(None)):
     token = authorization.split(" ")[1]
     
     try:
-        # Ask Supabase if the token is real
         response = supabase.auth.get_user(token)
-        user = response.user
-        return {
-            "message": "Token verified successfully!",
-            "id": user.id,
-            "email": user.email,
-            "created_at": user.created_at
-        }
+        return response.user
     except Exception as e:
-        # If the token is tampered with, expired, or invalid, reject it
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"error": "Invalid or expired token"}
+        )
+
+# 2. Protected profile route using the guard
+@app.get("/protected/profile", status_code=200)
+def protected_profile(user = Depends(get_current_user)):
+    return {
+        "message": "Token verified successfully!",
+        "id": user.id,
+        "email": user.email,
+        "created_at": user.created_at
+    }
+
+# 3. Second protected route (Dashboard) reusing the exact same guard
+@app.get("/protected/dashboard", status_code=200)
+def protected_dashboard(user = Depends(get_current_user)):
+    return {
+        "message": "Welcome to your secure dashboard!",
+        "email": user.email
+    }
+
+# 4. Logout route protected by the guard
+@app.post("/auth/logout", status_code=204)
+def logout(user = Depends(get_current_user)):
+    try:
+        supabase.auth.sign_out()
+        return None
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Error logging out"
         )
 
 @app.post("/auth/signup", status_code=status.HTTP_201_CREATED)
