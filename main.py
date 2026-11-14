@@ -30,16 +30,30 @@ def public_info():
 
 @app.get("/protected/profile", status_code=200)
 def protected_profile(authorization: str = Header(None)):
-    # Check if the header is missing or doesn't start with "Bearer "
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"error": "Access token required"}
         )
     
-    # Extract token (we aren't verifying it with Supabase yet—that's Stage 3!)
     token = authorization.split(" ")[1]
-    return {"message": "Token received successfully!", "token_preview": token[:10] + "..."}
+    
+    try:
+        # Ask Supabase if the token is real
+        response = supabase.auth.get_user(token)
+        user = response.user
+        return {
+            "message": "Token verified successfully!",
+            "id": user.id,
+            "email": user.email,
+            "created_at": user.created_at
+        }
+    except Exception as e:
+        # If the token is tampered with, expired, or invalid, reject it
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "Invalid or expired token"}
+        )
 
 @app.post("/auth/signup", status_code=status.HTTP_201_CREATED)
 def signup(body: AuthRequest):
@@ -51,15 +65,27 @@ def signup(body: AuthRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/auth/login")
-def login(body: AuthRequest):
-    if not body.email or not body.password:
-        raise HTTPException(status_code=400, detail="Email and password are required")
+
+from pydantic import BaseModel
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+@app.post("/auth/login", status_code=200)
+def login(user: UserLogin):
     try:
-        response = supabase.auth.sign_in_with_password({"email": body.email, "password": body.password})
-        return response
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid login credentials")
+        response = supabase.auth.sign_in_with_password({
+            "email": user.email,
+            "password": user.password
+        })
+        # Return the session data so we get access_token
+        return response.session
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid login credentials"
+        )
 
 def get_connection():
     return psycopg.connect(DATABASE_URL)
