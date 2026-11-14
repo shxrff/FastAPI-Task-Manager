@@ -73,3 +73,15 @@ A fully containerized task manager API built with **FastAPI**, backed by **Postg
 ### ⚙️ Environment Setup
 ```powershell
 cp .env.example .env
+
+### FastAPI Supabase Authentication Task Manager
+
+A production-ready FastAPI backend integrating Supabase Authentication, featuring secure dependency injection guards, token verification, and interactive Swagger UI documentation.
+
+## 🚀 Features
+- **User Signup & Login:** Seamless authentication powered by Supabase Auth.
+- **Public & Protected Endpoints:** Route-level gating using FastAPI Dependencies (`Depends`).
+- **Token Verification:** Real-time JWT validation via Supabase `get_user()`.
+- **Swagger UI Integration:** Built-in Bearer token security scheme for direct browser testing.
+
+---
